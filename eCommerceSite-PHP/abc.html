@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Form</title>
+</head>
+<body>
+
+    <!-- Main content container -->
+    <div>
+        <!-- Booking form for selecting number of persons -->
+        <form id="bookingForm" action="process_booking.php" method="POST">
+            <label for="nopInput">Number of Persons:</label>
+            <input id="nopInput" type="number" min="1" value="1" onchange="updateGrandTotal()" required>
+            <br>
+            <span id="grandTotal">Rs.<?php echo htmlentities($result->PackagePrice); ?></span> <!-- Initial display of total -->
+            <br>
+            <button type="button" onclick="validateAndSubmit()">Submit Booking</button>
+        </form>
+
+        <!-- Payment form for eSewa integration -->
+        <div>
+            <form id="paymentForm" action="https://uat.esewa.com.np/epay/main" method="POST">
+                <!-- Hidden fields for payment parameters -->
+                <input id="totalamt" name="tAmt" value="" type="hidden">
+                <input id="amt" name="amt" value="" type="hidden">
+                <input name="txAmt" value="0" type="hidden"> <!-- Tax amount -->
+                <input name="psc" value="0" type="hidden"> <!-- Service charge -->
+                <input name="pdc" value="0" type="hidden"> <!-- Delivery charge -->
+                <input name="scd" value="EPAYTEST" type="hidden"> <!-- Merchant's eSewa ID -->
+                <input name="pid" value="<?php echo $uuid ? htmlentities($uuid) : ''; ?>" type="hidden"> <!-- Payment ID -->
+                <input name="su" value="http://localhost/onlinetourism/tms/index.php" type="hidden"> <!-- Success URL -->
+                <input name="fu" value="https://google.com" type="hidden"> <!-- Failure URL -->
+                <button type="submit" onclick="submitBothForms()">Pay via ESewa</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PHP logic and includes -->
+    <?php
+        // PHP logic to handle error and success messages
+        $error = isset($error) ? $error : "";
+        $msg = isset($msg) ? $msg : "";
+    ?>
+    
+    <!-- JavaScript section -->
+    <script>
+        // Function to display error or success messages on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            var error = "<?php echo $error; ?>";
+            var msg = "<?php echo $msg; ?>";
+
+            if (error) {
+                alert("ERROR: " + error);
+            } else if (msg) {
+                alert("SUCCESS: " + msg);
+            }
+        });
+
+        // Set minimum date for booking based on current date
+        document.addEventListener('DOMContentLoaded', function() {
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementById("start").setAttribute('min', today);
+        });
+
+        // Validate and submit booking form
+        function validateAndSubmit() {
+            var nopInput = document.getElementById('nopInput');
+            if (nopInput.value > 0) {
+                updateGrandTotal();
+                document.getElementById('bookingForm').submit();
+            } else {
+                alert('Please enter a positive number');
+                nopInput.focus();
+            }
+        }
+
+        // Update grand total based on number of persons and package price
+        function updateGrandTotal() {
+            var nopInput = document.getElementById('nopInput').value;
+            var packagePrice = <?php echo htmlentities($result->PackagePrice); ?>;
+            var grandTotal = nopInput * packagePrice;
+            document.getElementById('grandTotal').textContent = 'Rs.' + grandTotal;
+            document.getElementById('totalamt').value = grandTotal; // Update total amount in payment form
+            document.getElementById('amt').value = grandTotal; // Update amount in payment form
+        }
+
+        // Submit both forms (booking and payment) on eSewa button click
+        function submitBothForms() {
+            document.getElementById('bookingForm').submit();
+            document.getElementById('paymentForm').submit();
+        }
+    </script>
+
+    <!-- Includes for footer, signup, signin, write-us sections -->
+    <?php include('includes/footer.php'); ?>
+    <?php include('includes/signup.php'); ?>
+    <?php include('includes/signin.php'); ?>
+    <?php include('includes/write-us.php'); ?>
+
+</body>
+</html>
