@@ -16,6 +16,48 @@ if(!isset($_SESSION['cart_p_id'])) {
 }
 ?>
 
+<?php
+
+function generate_uuid() {
+    // Generate a version 4 (random) UUID
+    return sprintf(
+        '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+        mt_rand(0, 0xffff),
+        mt_rand(0, 0x0fff) | 0x4000,
+        mt_rand(0, 0x3fff) | 0x8000,
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+    );
+}
+
+function generate_signature($total_amount, $transaction_uuid, $product_code, $secret_key) {
+    // Format the data string
+    $data_to_sign = "total_amount={$total_amount},transaction_uuid={$transaction_uuid},product_code={$product_code}";
+    
+    // Generate the HMAC SHA256 signature
+    $signature = hash_hmac('sha256', $data_to_sign, $secret_key, true);
+    
+    // Encode the signature in base64
+    $encoded_signature = base64_encode($signature);
+    
+    return $encoded_signature;
+}
+
+// Example usage
+$total_amount = 0;
+
+foreach($_SESSION['cart_p_current_price'] as $key => $value) {
+    $total_amount += $value;
+}
+
+
+$transaction_uuid = generate_uuid();
+$product_code = "EPAYTEST";
+$secret_key = "8gBm/:&EnhH.1/q";
+
+$signature = generate_signature($total_amount, $transaction_uuid, $product_code, $secret_key);
+?>
+
 <div class="page-banner" style="background-image: url(assets/uploads/<?php echo $banner_checkout; ?>)">
     <div class="overlay"></div>
     <div class="page-banner-inner">
@@ -326,21 +368,13 @@ if(!isset($_SESSION['cart_p_id'])) {
 	                                        <option value=""><?php echo LANG_VALUE_35; ?></option>
 	                            <!-- we can add other payment -->
 	                                        <option value="Bank Deposit"><?php echo LANG_VALUE_38; ?></option>
+                                            <option value="Bank Deposit"><?php echo LANG_VALUE_36; ?></option>
 	                                    </select>
 	                                </div>
 
-                                    <!-- <form class="paypal" action="<?php echo BASE_URL; ?>payment/paypal/payment_process.php" method="post" id="paypal_form" target="_blank">
-                                        <input type="hidden" name="cmd" value="_xclick" />
-                                        <input type="hidden" name="no_note" value="1" />
-                                        <input type="hidden" name="lc" value="UK" />
-                                        <input type="hidden" name="currency_code" value="USD" />
-                                        <input type="hidden" name="bn" value="PP-BuyNowBF:btn_buynow_LG.gif:NonHostedGuest" />
 
-                                        <input type="hidden" name="final_total" value="<?php echo $final_total; ?>">
-                                        <div class="col-md-12 form-group">
-                                            <input type="submit" class="btn btn-primary" value="<?php echo LANG_VALUE_46; ?>" name="form1">
-                                        </div>
-                                    </form> -->
+                                    
+    
 
                                  
 
@@ -370,9 +404,22 @@ if(!isset($_SESSION['cart_p_id'])) {
                                             <input type="submit" class="btn btn-primary" value="<?php echo LANG_VALUE_46; ?>" name="form3">
                                         </div>
                                     </form>
-	                                
 	                            </div>
-		                            
+                                <form action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST">
+    <input type="hidden" name="amount" value="<?php echo htmlspecialchars($total_amount); ?>">
+    <input type="hidden" name="product_delivery_charge" value="0">
+    <input type="hidden" name="product_service_charge" value="0">
+    <input type="hidden" name="product_code" value="<?php echo htmlspecialchars($product_code); ?>">
+    <input type="hidden" name="signature" value="<?php echo htmlspecialchars($signature); ?>">
+    <input type="hidden" name="signed_field_names" value="total_amount,transaction_uuid,product_code">
+    <input type="hidden" name="success_url" value="http://localhost:8000//payment_success.php">
+    <input type="hidden" name="tax_amount" value="0">
+    <input type="hidden" name="total_amount" value="<?php echo htmlspecialchars($total_amount); ?>">
+    <input type="hidden" name="transaction_uuid" value="<?php echo htmlspecialchars($transaction_uuid); ?>">
+    <input type="hidden" name="failure_url" value="http://localhost:8000//payment_failure.php">
+    
+    <button type="submit" style="background-color:red">Pay Now</button>
+</form>
 		                        
 		                    </div>
 		                <?php endif; ?>
