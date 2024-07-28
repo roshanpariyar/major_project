@@ -362,15 +362,15 @@ $signature = generate_signature($total_amount, $transaction_uuid, $product_code,
 		                		
 	                            <div class="row">
 
-	                                <div class="col-md-12 form-group">
+	                                <!-- <div class="col-md-12 form-group">
 	                                    <label for=""><?php echo LANG_VALUE_34; ?> *</label>
 	                                    <select name="payment_method" class="form-control select2" id="advFieldsStatus">
 	                                        <option value=""><?php echo LANG_VALUE_35; ?></option>
 	                            <!-- we can add other payment -->
-	                                        <option value="Bank Deposit"><?php echo LANG_VALUE_38; ?></option>
-                                            <option value="Bank Deposit"><?php echo LANG_VALUE_36; ?></option>
-	                                    </select>
-	                                </div>
+	                                        <!-- <option value="Bank Deposit"><?php echo LANG_VALUE_38; ?></option> -->
+                                            <!-- <option value="Esewa"><?php echo LANG_VALUE_36; ?></option> -->
+	                                    <!-- </select> -->
+	                                <!-- </div> --> 
 
 
                                     
@@ -418,7 +418,12 @@ $signature = generate_signature($total_amount, $transaction_uuid, $product_code,
     <input type="hidden" name="transaction_uuid" value="<?php echo htmlspecialchars($transaction_uuid); ?>">
     <input type="hidden" name="failure_url" value="http://localhost:8000//payment_failure.php">
     
-    <button type="submit" style="background-color:red">Pay Now</button>
+    <!-- <button type="submit" style="background-color:Green">Pay Now</button> -->
+    <!-- <button type="submit" style="background-color:Green; color:white; padding:10px 20px; border:none; border-radius:5px; font-size:16px;">Pay With esewa</button> -->
+    <button type="submit" style="background-color:transparent; border:none; padding:0; cursor:pointer;">
+        <img src="../assets/uploads/esewa-Logo.png" alt="Pay with eSewa" style="width:150px; height:auto;">
+    </button>
+    
 </form>
 		                        
 		                    </div>

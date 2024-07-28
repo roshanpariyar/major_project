@@ -101,7 +101,7 @@ if (isset($_POST['form1'])) {
             // Content
             $mail->isHTML(true);
             $mail->Subject = 'Account Verification';
-            $base_url = 'http://localhost:3000/eCommerceSite-PHP/';
+            $base_url = 'http://localhost:8000/';
             $verify_link = $base_url . 'verify.php?email=' . urlencode($_POST['cust_email']) . '&token=' . $token;
             $mail->Body    = 'Click the following link to verify your account:<br><br><a href="' . $verify_link . '">' . $verify_link . '</a>';
 
@@ -209,3 +209,18 @@ if (isset($_POST['form1'])) {
 </div>
 
 <?php require_once('footer.php'); ?>
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/66826635eaf3bd8d4d16bbb1/1i1mlugii';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->
+</body>
+</html>

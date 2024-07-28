@@ -144,7 +144,7 @@ if($success_message != '') {
                     <th>Customer</th>
 			        <th>Product Details</th>
                     <th>
-                    	Payment Information
+                    	<!-- Payment Information -->
                     </th>
                   
                     <th>Paid Amount</th>
