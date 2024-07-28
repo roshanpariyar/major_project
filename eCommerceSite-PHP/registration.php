@@ -101,7 +101,7 @@ if (isset($_POST['form1'])) {
             // Content
             $mail->isHTML(true);
             $mail->Subject = 'Account Verification';
-            $base_url = 'http://localhost:3000/eCommerceSite-PHP/';
+            $base_url = 'http://localhost:8000/';
             $verify_link = $base_url . 'verify.php?email=' . urlencode($_POST['cust_email']) . '&token=' . $token;
             $mail->Body    = 'Click the following link to verify your account:<br><br><a href="' . $verify_link . '">' . $verify_link . '</a>';
 

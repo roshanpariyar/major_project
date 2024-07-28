@@ -1,102 +1,73 @@
-<?php require_once('header.php'); ?>
-<?php
-if(!defined("LANG_VALUE_12")){
-define("LANG_VALUE_12",'Update');
-}
-if(!defined("LANG_VALUE_4")){
-define("LANG_VALUE_4",'Retype Password');	
- 
+<?php require_once('header.php'); 
+require 'vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-    }if(!defined("LANG_VALUE_97")){
-        define("LANG_VALUE_97",'Update Password');
-        }
-        if(!defined("LANG_VALUE_131")){
-        define("LANG_VALUE_131",'New Password');}	
-        if(!defined("LANG_VALUE_134")){
-        define("LANG_VALUE_134",'Retype New Password');}	
-            
-            if(!defined("LANG_VALUE_135")){
-     define("LANG_VALUE_135",' Password can not be empty.');	
-    }	
-       
-            if(!defined("LANG_VALUE_139")){
-        define("LANG_VALUE_139", 'Passwords do not match.');}	
-        
-        if(!defined("LANG_VALUE_142")){
-            define("LANG_VALUE_142", 'Passwords do not match.');}	
-            if(!defined("LANG_VALUE_143")){
-                define("LANG_VALUE_143", 'Passwords do not match.');}	
-                if(!defined("LANG_VALUE_94")){
-                    define("LANG_VALUE_94", 'Passwords do not match.');}	
-              
-?>
-<?php
-$statement = $pdo->prepare("SELECT * FROM tbl_settings WHERE id=1");
-$statement->execute();
-$result = $statement->fetchAll(PDO::FETCH_ASSOC);                            
-foreach ($result as $row) {
-    $banner_forget_password = $row['banner_forget_password'];
-}
-?>
+$error_message = '';
+$success_message = '';
 
-<?php
+function generateRandomPassword($length = 8) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $charactersLength = strlen($characters);
+    $randomPassword = '';
+    for ($i = 0; $i < $length; $i++) {
+        $randomPassword .= $characters[rand(0, $charactersLength - 1)];
+    }
+    return $randomPassword;
+}
+
 if(isset($_POST['form1'])) {
+    $cust_email = strip_tags($_POST['cust_email']);
+    
+    // Check if the email exists in the database
+    $statement = $pdo->prepare("SELECT * FROM tbl_customer WHERE cust_email=?");
+    $statement->execute(array($cust_email));
+    $result = $statement->fetch(PDO::FETCH_ASSOC);
+    $tot = $statement->rowCount();
 
-    $valid = 1;
-        
-    if(empty($_POST['cust_email'])) {
-        $valid = 0;
-        $error_message .= LANG_VALUE_131."\\n";
+    if($tot == 0) {
+        $error_message .= 'Email not found.<br>';
     } else {
-        if (filter_var($_POST['cust_email'], FILTER_VALIDATE_EMAIL) === false) {
-            $valid = 0;
-            $error_message .= LANG_VALUE_134."\\n";
-        } else {
-            $statement = $pdo->prepare("SELECT * FROM tbl_customer WHERE cust_email=?");
-            $statement->execute(array($_POST['cust_email']));
-            $total = $statement->rowCount();                        
-            if(!$total) {
-                $valid = 0;
-                $error_message .= LANG_VALUE_135."\\n";
-            }
-        }
-    }
-
-    if($valid == 1) {
-
-        $statement = $pdo->prepare("SELECT * FROM tbl_settings WHERE id=1");
-        $statement->execute();
-        $result = $statement->fetchAll(PDO::FETCH_ASSOC);                           
-        foreach ($result as $row) {
-            $forget_password_message = $row['forget_password_message'];
-        }
-
-        $token = md5(rand());
-        $now = time();
-
-        $statement = $pdo->prepare("UPDATE tbl_customer SET cust_token=?,cust_timestamp=? WHERE cust_email=?");
-        $statement->execute(array($token,$now,strip_tags($_POST['cust_email'])));
+        $new_password = generateRandomPassword();
+        $new_password_hashed = md5($new_password);
         
-        $message = '<p>'.LANG_VALUE_142.'<br> <a href="'.BASE_URL.'reset-password.php?email='.$_POST['cust_email'].'&token='.$token.'">Click here</a>';
-        
-        $to      = $_POST['cust_email'];
-        $subject = LANG_VALUE_143;
-        $headers = "From: noreply@" . BASE_URL . "\r\n" .
-                   "Reply-To: noreply@" . BASE_URL . "\r\n" .
-                   "X-Mailer: PHP/" . phpversion() . "\r\n" . 
-                   "MIME-Version: 1.0\r\n" . 
-                   "Content-Type: text/html; charset=ISO-8859-1\r\n";
+        // Update the new password in the database
+        $statement = $pdo->prepare("UPDATE tbl_customer SET cust_password=? WHERE cust_email=?");
+        $statement->execute(array($new_password_hashed, $cust_email));
 
-        mail($to, $subject, $message, $headers);
+        // Send email using PHPMailer
+        $mail = new PHPMailer(true);
+        try {
+            //Server settings
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'jerseyhouse1234@gmail.com'; // Replace with your actual SMTP username
+            $mail->Password   = 'usce wrhm wqde hkvx'; // Replace with your actual SMTP password
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
 
-        $success_message = $forget_password_message;
+            //Recipients
+            $mail->setFrom('jerseyhouse1234@gmail.com', 'Jersey House');
+            $mail->addAddress($cust_email);
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = 'Your New Password';
+            $mail->Body    = 'Your new password is: ' . $new_password;
+
+            $mail->send();
+            $success_message = 'A new password has been sent to your email address.';
+        } catch (Exception $e) {
+            $error_message = 'Message could not be sent. Mailer Error: ' . $mail->ErrorInfo;
+        }
     }
 }
 ?>
 
-<div class="page-banner" style="background-color:#444;background-image: url(assets/uploads/<?php echo $banner_forget_password; ?>);">
+<div class="page-banner" style="background-color:#444;background-image: url(assets/uploads/<?php echo $banner_reset_password; ?>);">
     <div class="inner">
-        <h1><?php echo LANG_VALUE_97; ?></h1>
+        <h1>Forgot Password</h1>
     </div>
 </div>
 
@@ -107,28 +78,20 @@ if(isset($_POST['form1'])) {
                 <div class="user-content">
                     <?php
                     if($error_message != '') {
-                        echo "<script>alert('".$error_message."')</script>";
+                        echo "<div class='error' style='padding: 10px;background:#f1f1f1;margin-bottom:20px;'>".$error_message."</div>";
                     }
                     if($success_message != '') {
-                        echo "<script>alert('".$success_message."')</script>";
+                        echo "<div class='success' style='padding: 10px;background:#f1f1f1;margin-bottom:20px;'>".$success_message."</div>";
                     }
                     ?>
                     <form action="" method="post">
-                        <?php $csrf->echoInputField(); ?>
-                        <div class="row">
-                            <div class="col-md-4"></div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for=""><?php echo LANG_VALUE_94; ?> *</label>
-                                    <input type="email" class="form-control" name="cust_email">
-                                </div>
-                                <div class="form-group">
-                                    <label for=""></label>
-                                    <input type="submit" class="btn btn-primary" value="<?php echo LANG_VALUE_4; ?>" name="form1">
-                                </div>
-                                <a href="login.php" style="color:#e4144d;"><?php echo LANG_VALUE_12; ?></a>
-                            </div>
-                        </div>                        
+                        <div class="form-group">
+                            <label for="cust_email">Email *</label>
+                            <input type="email" class="form-control" name="cust_email" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" class="btn btn-primary" value="Send New Password" name="form1">
+                        </div>
                     </form>
                 </div>                
             </div>
